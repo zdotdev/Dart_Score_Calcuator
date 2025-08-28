@@ -119,11 +119,25 @@
 
     // Allowed checkouts (must end on a double)
     function findCheckout(target) {
+      // 1 dart checkout (double only)
+      for (let k = 0; k < doubles.length; k++) {
+        if (doubles[k].value === target) {
+          return [doubles[k].label];
+        }
+      }
+      // 2 dart checkout (any + double)
+      for (let i = 0; i < allThrows.length; i++) {
+        for (let k = 0; k < doubles.length; k++) {
+          if (allThrows[i].value + doubles[k].value === target) {
+            return [allThrows[i].label, doubles[k].label];
+          }
+        }
+      }
+      // 3 dart checkout (any + any + double)
       for (let i = 0; i < allThrows.length; i++) {
         for (let j = 0; j < allThrows.length; j++) {
-          for (let k = 0; k < doubles.length; k++) { // last dart must be double
-            const sum = allThrows[i].value + allThrows[j].value + doubles[k].value;
-            if (sum === target) {
+          for (let k = 0; k < doubles.length; k++) {
+            if (allThrows[i].value + allThrows[j].value + doubles[k].value === target) {
               return [allThrows[i].label, allThrows[j].label, doubles[k].label];
             }
           }
@@ -182,11 +196,12 @@
         return;
       }
 
-      // Try checkout first
+      // Try checkout first (lowest dart count)
       const checkout = findCheckout(target);
       if (checkout) {
         output.innerHTML = `✅ <span class="highlight">Checkout possible!</span><br>
-        Suggested darts: <b>${checkout.join(" , ")}</b>`;
+        Suggested darts: <b>${checkout.join(" , ")}</b><br>
+        <span style='color:#aaa'>Checkout in ${checkout.length} dart${checkout.length>1?"s":""}!</span>`;
         return;
       }
 
