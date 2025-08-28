@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Darts Optimizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #111, #222);
+      color: #f1f1f1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 30px 15px;
+    }
+
+    h1 {
+      color: #00ff88;
+      text-shadow: 0 0 10px #00ff88aa;
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    p {
+      color: #aaa;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: #1c1c1c;
+      border-radius: 16px;
+      padding: 25px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      background: #2a2a2a;
+      color: #fff;
+    }
+
+    button {
+      padding: 12px 18px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #00ff88;
+      color: #111;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #00cc6a;
+    }
+
+    .result {
+      background: #292929;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .highlight {
+      color: #00ff88;
+      font-weight: bold;
+      text-shadow: 0 0 6px #00ff88aa;
+    }
+
+    @media (max-width: 500px) {
+      h1 { font-size: 1.8rem; }
+      .card { padding: 20px; }
+      input, button { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 Darts Optimizer</h1>
+  <p>Enter your current score to see the best 3-dart checkout or scoring setup.</p>
+
+  <div class="card">
+    <div class="input-group">
+      <input type="number" id="target" placeholder="Enter score (e.g. 301)">
+      <button onclick="calculate()">Go</button>
+    </div>
+    <div class="result" id="output">💡 Waiting for input...</div>
+  </div>
+
+  <script>
+    const singles = Array.from({length: 20}, (_, i) => ({label: `S${i+1}`, value: i+1}));
+    const doubles = singles.map(s => ({label: `D${s.value}`, value: s.value*2}));
+    const trebles = singles.map(s => ({label: `T${s.value}`, value: s.value*3}));
+    const bull = [{label: "S25", value: 25}, {label: "DBULL", value: 50}];
+
+    const allThrows = [...singles, ...doubles, ...trebles, ...bull];
+
+    // Allowed checkouts (must end on a double)
+    function findCheckout(target) {
+      for (let i = 0; i < allThrows.length; i++) {
+        for (let j = 0; j < allThrows.length; j++) {
+          for (let k = 0; k < doubles.length; k++) { // last dart must be double
+            const sum = allThrows[i].value + allThrows[j].value + doubles[k].value;
+            if (sum === target) {
+              return [allThrows[i].label, allThrows[j].label, doubles[k].label];
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    // Setup suggestion (leave finishable score next turn)
+    const checkoutScores = new Set([
+      170,167,164,161,160,158,157,156,155,154,153,152,151,150,149,148,147,146,145,144,143,142,141,
+      140,139,138,137,136,135,134,133,132,131,130,129,128,127,126,125,124,123,122,121,120,
+      ...Array.from({length: 80}, (_,i)=>i+2).filter(x=>x%2===0) // doubles
+    ]);
+
+    function findSetup(target) {
+      for (let i = 0; i < allThrows.length; i++) {
+        for (let j = 0; j < allThrows.length; j++) {
+          for (let k = 0; k < allThrows.length; k++) {
+            const sum = allThrows[i].value + allThrows[j].value + allThrows[k].value;
+            const remaining = target - sum;
+            if (remaining > 1 && checkoutScores.has(remaining)) {
+              return {
+                combo: [allThrows[i].label, allThrows[j].label, allThrows[k].label],
+                leave: remaining
+              };
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function highestScore(target) {
+      let max = 0, best = null;
+      for (let i = 0; i < allThrows.length; i++) {
+        for (let j = 0; j < allThrows.length; j++) {
+          for (let k = 0; k < allThrows.length; k++) {
+            const sum = allThrows[i].value + allThrows[j].value + allThrows[k].value;
+            if (sum <= target && sum > max) {
+              max = sum;
+              best = [allThrows[i].label, allThrows[j].label, allThrows[k].label];
+            }
+          }
+        }
+      }
+      return { combo: best, score: max };
+    }
+
+    function calculate() {
+      const target = parseInt(document.getElementById("target").value);
+      const output = document.getElementById("output");
+
+      if (!target || target < 1) {
+        output.innerHTML = "⚠️ Please enter a valid score.";
+        return;
+      }
+
+      // Try checkout first
+      const checkout = findCheckout(target);
+      if (checkout) {
+        output.innerHTML = `✅ <span class="highlight">Checkout possible!</span><br>
+        Suggested darts: <b>${checkout.join(" , ")}</b>`;
+        return;
+      }
+
+      // Try setup next
+      const setup = findSetup(target);
+      if (setup) {
+        output.innerHTML = `🎯 <span class="highlight">No checkout this turn.</span><br>
+        Setup suggestion: <b>${setup.combo.join(" , ")}</b><br>
+        Leave <span class="highlight">${setup.leave}</span> for next turn.`;
+        return;
+      }
+
+      // Otherwise go max score
+      const high = highestScore(target);
+      output.innerHTML = `💥 <span class="highlight">No setup available.</span><br>
+      Go for max score: <b>${high.combo.join(" , ")}</b><br>
+      Total scored: <span class="highlight">${high.score}</span>`;
+    }
+  </script>
+</body>
+</html>
