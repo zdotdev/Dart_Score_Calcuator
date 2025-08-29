@@ -351,26 +351,21 @@
   </div>
 
   <script>
-    // Precompute all possible dart values
     const singles = Array.from({length: 20}, (_, i) => ({label: `S${i+1}`, value: i+1}));
     const doubles = singles.map(s => ({label: `D${s.value}`, value: s.value*2}));
     const trebles = singles.map(s => ({label: `T${s.value}`, value: s.value*3}));
     const bull = [{label: "S25", value: 25}, {label: "DBULL", value: 50}];
     const allThrows = [...singles, ...doubles, ...trebles, ...bull];
-    
-    // Precompute all valid checkout scores (must be even between 2-170)
     const checkoutScores = new Set();
+    
     for (let i = 2; i <= 170; i += 2) {
       checkoutScores.add(i);
     }
-    // Add odd checkouts that are possible with bull finishes
     checkoutScores.add(25);
     checkoutScores.add(50);
     
-    // Cache for setup recommendations
     const setupCache = new Map();
     
-    // Current active tab
     let activeTab = 'checkout';
 
     function switchTab(tab) {
@@ -378,23 +373,19 @@
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
       
-      // Recalculate with current input value
       const target = parseInt(document.getElementById("target").value);
       if (target && target > 1) {
         calculate();
       }
     }
 
-    // Find checkout combinations (must end with double/bull)
     function findCheckout(target) {
-      // 1-dart checkout
       for (const dart of allThrows) {
         if (dart.value === target && (dart.label.startsWith('D') || dart.label === 'DBULL')) {
           return [{dart: dart, count: 1}];
         }
       }
       
-      // 2-dart checkout
       for (const first of allThrows) {
         const remaining = target - first.value;
         if (remaining <= 0) continue;
@@ -405,8 +396,7 @@
           }
         }
       }
-      
-      // 3-dart checkout
+
       for (const first of allThrows) {
         for (const second of allThrows) {
           const subtotal = first.value + second.value;
@@ -430,91 +420,81 @@
       return null;
     }
 
-    // Find optimal setup combinations - IMPROVED ALGORITHM
     function findOptimalSetups(target) {
-      // Return cached result if available
       if (setupCache.has(target)) {
         return setupCache.get(target);
       }
       
-      const setups = [];
       const seenLeaves = new Set();
-      
-      // Check all 3-dart combinations, prioritizing high scores
+      const bestSetups = new Map();
       for (const first of allThrows) {
         for (const second of allThrows) {
           for (const third of allThrows) {
             const total = first.value + second.value + third.value;
-            if (total >= target) continue;
-            
+            if (total >= target || total % 2 !== 0 || !(third.label.startsWith('D') || third.label === 'DBULL')) continue;
             const leave = target - total;
-            
-            // Only consider valid leaves that can be checked out
-            if (checkoutScores.has(leave) && !seenLeaves.has(leave)) {
-              // Prioritize high scores that leave favorable checkout numbers
-              const favorability = calculateFavorability(leave);
-              setups.push({
-                darts: [first, second, third],
-                score: total,
-                leave: leave,
-                favorability: favorability
-              });
-              seenLeaves.add(leave);
+            if (checkoutScores.has(leave)) {
+              if (!bestSetups.has(leave) || bestSetups.get(leave).score < total) {
+                const favorability = calculateFavorability(leave);
+                bestSetups.set(leave, {
+                  darts: [first, second, third],
+                  score: total,
+                  leave: leave,
+                  favorability: favorability
+                });
+              }
             }
           }
         }
       }
-      
-      // Sort by favorability (higher is better) then by score (higher is better)
+  const setups = Array.from(bestSetups.values());
       setups.sort((a, b) => {
         if (b.favorability !== a.favorability) {
           return b.favorability - a.favorability;
         }
         return b.score - a.score;
       });
-      
-      // Return top 5 setups
+      setups.sort((a, b) => {
+        if (b.favorability !== a.favorability) {
+          return b.favorability - a.favorability;
+        }
+        return b.score - a.score;
+      });
       const topSetups = setups.slice(0, 5);
-      
-      // Cache the result
       setupCache.set(target, topSetups);
-      
       return topSetups;
     }
 
-    // Calculate how favorable a leave score is (higher is better)
     function calculateFavorability(score) {
-      // Scores that are easier to checkout get higher favorability
-      if (score <= 40 && score % 2 === 0) return 100; // Easy double finishes
-      if (score === 50) return 95; // Bull finish
-      if (score === 25) return 90; // Single bull finish (needs double next)
-      if (score > 120) return score / 4; // High scores are less favorable
-      if (score > 80) return score / 3; // Medium-high scores
-      return score / 2; // General case
+      if (score <= 40 && score % 2 === 0) return 100;
+      if (score === 50) return 95;
+      if (score === 25) return 90;
+      if (score > 120) return score / 4;
+      if (score > 80) return score / 3;
+      return score / 2;
     }
 
-    // Find maximum scoring combination
     function findMaxScore(target) {
       let maxScore = 0;
       let bestCombo = null;
-      
       for (const first of allThrows) {
         for (const second of allThrows) {
           for (const third of allThrows) {
             const total = first.value + second.value + third.value;
-            if (total <= target && total > maxScore) {
-              maxScore = total;
-              bestCombo = [first, second, third];
+            if (total <= target && total % 2 === 0 && (third.label.startsWith('D') || third.label === 'DBULL')) {
+              if (total > maxScore) {
+                maxScore = total;
+                bestCombo = [first, second, third];
+              }
             }
           }
         }
       }
-      
-      return {
+      return bestCombo ? [{
         darts: bestCombo,
         score: maxScore,
         leave: target - maxScore
-      };
+      }] : [];
     }
 
     function calculate() {
@@ -563,7 +543,6 @@
       
       if (activeTab === 'setup' || (!resultHTML && activeTab === 'checkout')) {
         const setups = findOptimalSetups(target);
-        
         if (setups.length > 0) {
           resultHTML = setups.map(setup => `
             <div class="result-item setup">
@@ -577,8 +556,28 @@
             </div>
           `).join('');
         } else {
-          // Fall back to max score if no setups found
-          const maxScore = findMaxScore(target);
+          const maxScores = findMaxScore(target);
+          if (maxScores.length > 0) {
+            const maxScore = maxScores[0];
+            resultHTML = `
+              <div class="result-item max-score">
+                <div class="dart-combo">
+                  ${maxScore.darts.map(dart => `<span class="dart">${dart.label}</span>`).join('')}
+                </div>
+                <div class="score-info">
+                  <span>Score: <span class="score-value">${maxScore.score}</span></span>
+                  <span>Leave: <span class="leave-value">${maxScore.leave}</span></span>
+                </div>
+              </div>
+            `;
+          }
+        }
+      }
+      
+      if (activeTab === 'max') {
+        const maxScores = findMaxScore(target);
+        if (maxScores.length > 0) {
+          const maxScore = maxScores[0];
           resultHTML = `
             <div class="result-item max-score">
               <div class="dart-combo">
@@ -593,32 +592,15 @@
         }
       }
       
-      if (activeTab === 'max') {
-        const maxScore = findMaxScore(target);
-        resultHTML = `
-          <div class="result-item max-score">
-            <div class="dart-combo">
-              ${maxScore.darts.map(dart => `<span class="dart">${dart.label}</span>`).join('')}
-            </div>
-            <div class="score-info">
-              <span>Score: <span class="score-value">${maxScore.score}</span></span>
-              <span>Leave: <span class="leave-value">${maxScore.leave}</span></span>
-            </div>
-          </div>
-        `;
-      }
-      
       output.innerHTML = resultHTML;
     }
 
-    // Add keyboard support
     document.getElementById('target').addEventListener('keyup', function(event) {
       if (event.key === 'Enter') {
         calculate();
       }
     });
 
-    // Calculate on load with default value
     window.onload = calculate;
   </script>
 </body>
