@@ -2,15 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Darts Optimizer</title>
+  <title>Dart Score Optimizer Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    :root {
+      --primary: #00ff88;
+      --primary-dark: #00cc6a;
+      --secondary: #ffc107;
+      --tertiary: #2196f3;
+      --danger: #f44336;
+      --bg-dark: #111;
+      --bg-medium: #1c1c1c;
+      --bg-light: #292929;
+      --text-light: #f1f1f1;
+      --text-muted: #aaa;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #111, #222);
-      color: #f1f1f1;
+      background: linear-gradient(135deg, var(--bg-dark), #222);
+      color: var(--text-light);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -19,27 +36,32 @@
       padding: 30px 15px;
     }
 
+    .container {
+      width: 100%;
+      max-width: 600px;
+    }
+
     h1 {
-      color: #00ff88;
-      text-shadow: 0 0 10px #00ff88aa;
+      color: var(--primary);
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.67);
       font-size: 2.2rem;
       margin-bottom: 15px;
       text-align: center;
     }
 
     p {
-      color: #aaa;
+      color: var(--text-muted);
       text-align: center;
       margin-bottom: 25px;
     }
 
     .card {
-      background: #1c1c1c;
+      background: var(--bg-medium);
       border-radius: 16px;
       padding: 25px;
-      max-width: 500px;
       width: 100%;
       box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
     }
 
     .input-group {
@@ -53,10 +75,15 @@
       padding: 12px;
       font-size: 1rem;
       border-radius: 8px;
-      border: none;
+      border: 2px solid transparent;
       outline: none;
       background: #2a2a2a;
-      color: #fff;
+      color: var(--text-light);
+      transition: border 0.3s;
+    }
+
+    input:focus {
+      border: 2px solid var(--primary);
     }
 
     button {
@@ -65,29 +92,117 @@
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      background: #00ff88;
+      background: var(--primary);
       color: #111;
       font-weight: bold;
       transition: 0.2s;
     }
 
     button:hover {
-      background: #00cc6a;
+      background: var(--primary-dark);
     }
 
     .result {
-      background: #292929;
+      background: var(--bg-light);
       border-radius: 12px;
       padding: 20px;
       margin-top: 20px;
       line-height: 1.6;
-      text-align: center;
     }
 
     .highlight {
-      color: #00ff88;
+      color: var(--primary);
       font-weight: bold;
-      text-shadow: 0 0 6px #00ff88aa;
+    }
+
+    .result-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #333;
+    }
+
+    .result-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .dart-combo {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .dart {
+      background: #333;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .checkout {
+      background: rgba(0, 255, 136, 0.15);
+      border-left: 4px solid var(--primary);
+    }
+
+    .setup {
+      background: rgba(255, 193, 7, 0.15);
+      border-left: 4px solid var(--secondary);
+    }
+
+    .max-score {
+      background: rgba(33, 150, 243, 0.15);
+      border-left: 4px solid var(--tertiary);
+    }
+
+    .score-info {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      font-size: 0.9em;
+      color: var(--text-muted);
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+      background: #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      background: #2a2a2a;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: #111;
+      font-weight: bold;
+    }
+
+    .priority-info {
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      font-size: 0.9em;
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
     }
 
     @media (max-width: 500px) {
@@ -98,128 +213,309 @@
   </style>
 </head>
 <body>
-  <h1>🎯 Darts Optimizer</h1>
-  <p>Enter your current score to see the best 3-dart checkout or scoring setup.</p>
+  <div class="container">
+    <h1>🎯 Dart Score Optimizer Pro</h1>
+    <p>Enter your current score to see the best 3-dart checkout or optimal setup for your next visit.</p>
 
-  <div class="card">
-    <div class="input-group">
-      <input type="number" id="target" placeholder="Enter score (e.g. 301)">
-      <button onclick="calculate()">Go</button>
+    <div class="card">
+      <div class="input-group">
+        <input type="number" id="target" placeholder="Enter score (e.g. 501)" min="2" max="180" value="167">
+        <button onclick="calculate()">Calculate</button>
+      </div>
+      
+      <div class="tabs">
+        <div class="tab active" id="tab-checkout" onclick="switchTab('checkout')">Checkout</div>
+        <div class="tab" id="tab-setup" onclick="switchTab('setup')">Setup</div>
+        <div class="tab" id="tab-max" onclick="switchTab('max')">Max Score</div>
+      </div>
+      
+      <div class="result" id="output">
+        <div class="result-item">
+          <div class="dart-combo">
+            <span class="dart">Enter your score</span>
+          </div>
+          <div class="score-info">
+            <span>💡 Waiting for input...</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="result" id="output">💡 Waiting for input...</div>
+
+    <div class="footer">
+      Dart Score Optimizer Pro by ZDOTDEV © 2025 | Tala Dart Corporation 🎯
+    </div>
   </div>
 
   <script>
+    // Precompute all possible dart values
     const singles = Array.from({length: 20}, (_, i) => ({label: `S${i+1}`, value: i+1}));
     const doubles = singles.map(s => ({label: `D${s.value}`, value: s.value*2}));
     const trebles = singles.map(s => ({label: `T${s.value}`, value: s.value*3}));
     const bull = [{label: "S25", value: 25}, {label: "DBULL", value: 50}];
-
     const allThrows = [...singles, ...doubles, ...trebles, ...bull];
+    
+    // Precompute all valid checkout scores (must be even between 2-170)
+    const checkoutScores = new Set();
+    for (let i = 2; i <= 170; i += 2) {
+      checkoutScores.add(i);
+    }
+    // Add odd checkouts that are possible with bull finishes
+    checkoutScores.add(25);
+    checkoutScores.add(50);
+    
+    // Cache for setup recommendations
+    const setupCache = new Map();
+    
+    // Current active tab
+    let activeTab = 'checkout';
 
-    // Allowed checkouts (must end on a double)
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      
+      // Recalculate with current input value
+      const target = parseInt(document.getElementById("target").value);
+      if (target && target > 1) {
+        calculate();
+      }
+    }
+
+    // Find checkout combinations (must end with double/bull)
     function findCheckout(target) {
-      // 1 dart checkout (double only)
-      for (let k = 0; k < doubles.length; k++) {
-        if (doubles[k].value === target) {
-          return [doubles[k].label];
+      // 1-dart checkout
+      for (const dart of allThrows) {
+        if (dart.value === target && (dart.label.startsWith('D') || dart.label === 'DBULL')) {
+          return [{dart: dart, count: 1}];
         }
       }
-      // 2 dart checkout (any + double)
-      for (let i = 0; i < allThrows.length; i++) {
-        for (let k = 0; k < doubles.length; k++) {
-          if (allThrows[i].value + doubles[k].value === target) {
-            return [allThrows[i].label, doubles[k].label];
+      
+      // 2-dart checkout
+      for (const first of allThrows) {
+        const remaining = target - first.value;
+        if (remaining <= 0) continue;
+        
+        for (const second of allThrows) {
+          if (second.value === remaining && (second.label.startsWith('D') || second.label === 'DBULL')) {
+            return [{dart: first, count: 2}, {dart: second, count: 2}];
           }
         }
       }
-      // 3 dart checkout (any + any + double)
-      for (let i = 0; i < allThrows.length; i++) {
-        for (let j = 0; j < allThrows.length; j++) {
-          for (let k = 0; k < doubles.length; k++) {
-            if (allThrows[i].value + allThrows[j].value + doubles[k].value === target) {
-              return [allThrows[i].label, allThrows[j].label, doubles[k].label];
+      
+      // 3-dart checkout
+      for (const first of allThrows) {
+        for (const second of allThrows) {
+          const subtotal = first.value + second.value;
+          if (subtotal >= target) continue;
+          
+          const remaining = target - subtotal;
+          if (remaining <= 0) continue;
+          
+          for (const third of allThrows) {
+            if (third.value === remaining && (third.label.startsWith('D') || third.label === 'DBULL')) {
+              return [
+                {dart: first, count: 3},
+                {dart: second, count: 3},
+                {dart: third, count: 3}
+              ];
             }
           }
         }
       }
+      
       return null;
     }
 
-    // Setup suggestion (leave finishable score next turn)
-    const checkoutScores = new Set([
-      170,167,164,161,160,158,157,156,155,154,153,152,151,150,149,148,147,146,145,144,143,142,141,
-      140,139,138,137,136,135,134,133,132,131,130,129,128,127,126,125,124,123,122,121,120,
-      ...Array.from({length: 80}, (_,i)=>i+2).filter(x=>x%2===0) // doubles
-    ]);
-
-    function findSetup(target) {
-      for (let i = 0; i < allThrows.length; i++) {
-        for (let j = 0; j < allThrows.length; j++) {
-          for (let k = 0; k < allThrows.length; k++) {
-            const sum = allThrows[i].value + allThrows[j].value + allThrows[k].value;
-            const remaining = target - sum;
-            if (remaining > 1 && checkoutScores.has(remaining)) {
-              return {
-                combo: [allThrows[i].label, allThrows[j].label, allThrows[k].label],
-                leave: remaining
-              };
+    // Find optimal setup combinations - IMPROVED ALGORITHM
+    function findOptimalSetups(target) {
+      // Return cached result if available
+      if (setupCache.has(target)) {
+        return setupCache.get(target);
+      }
+      
+      const setups = [];
+      const seenLeaves = new Set();
+      
+      // Check all 3-dart combinations, prioritizing high scores
+      for (const first of allThrows) {
+        for (const second of allThrows) {
+          for (const third of allThrows) {
+            const total = first.value + second.value + third.value;
+            if (total >= target) continue;
+            
+            const leave = target - total;
+            
+            // Only consider valid leaves that can be checked out
+            if (checkoutScores.has(leave) && !seenLeaves.has(leave)) {
+              // Prioritize high scores that leave favorable checkout numbers
+              const favorability = calculateFavorability(leave);
+              setups.push({
+                darts: [first, second, third],
+                score: total,
+                leave: leave,
+                favorability: favorability
+              });
+              seenLeaves.add(leave);
             }
           }
         }
       }
-      return null;
+      
+      // Sort by favorability (higher is better) then by score (higher is better)
+      setups.sort((a, b) => {
+        if (b.favorability !== a.favorability) {
+          return b.favorability - a.favorability;
+        }
+        return b.score - a.score;
+      });
+      
+      // Return top 5 setups
+      const topSetups = setups.slice(0, 5);
+      
+      // Cache the result
+      setupCache.set(target, topSetups);
+      
+      return topSetups;
     }
 
-    function highestScore(target) {
-      let max = 0, best = null;
-      for (let i = 0; i < allThrows.length; i++) {
-        for (let j = 0; j < allThrows.length; j++) {
-          for (let k = 0; k < allThrows.length; k++) {
-            const sum = allThrows[i].value + allThrows[j].value + allThrows[k].value;
-            if (sum <= target && sum > max) {
-              max = sum;
-              best = [allThrows[i].label, allThrows[j].label, allThrows[k].label];
+    // Calculate how favorable a leave score is (higher is better)
+    function calculateFavorability(score) {
+      // Scores that are easier to checkout get higher favorability
+      if (score <= 40 && score % 2 === 0) return 100; // Easy double finishes
+      if (score === 50) return 95; // Bull finish
+      if (score === 25) return 90; // Single bull finish (needs double next)
+      if (score > 120) return score / 4; // High scores are less favorable
+      if (score > 80) return score / 3; // Medium-high scores
+      return score / 2; // General case
+    }
+
+    // Find maximum scoring combination
+    function findMaxScore(target) {
+      let maxScore = 0;
+      let bestCombo = null;
+      
+      for (const first of allThrows) {
+        for (const second of allThrows) {
+          for (const third of allThrows) {
+            const total = first.value + second.value + third.value;
+            if (total <= target && total > maxScore) {
+              maxScore = total;
+              bestCombo = [first, second, third];
             }
           }
         }
       }
-      return { combo: best, score: max };
+      
+      return {
+        darts: bestCombo,
+        score: maxScore,
+        leave: target - maxScore
+      };
     }
 
     function calculate() {
       const target = parseInt(document.getElementById("target").value);
       const output = document.getElementById("output");
 
-      if (!target || target < 1) {
-        output.innerHTML = "⚠️ Please enter a valid score.";
+      if (!target || target < 2) {
+        output.innerHTML = `<div class="result-item">
+          <div class="dart-combo">
+            <span class="dart">Invalid score</span>
+          </div>
+          <div class="score-info">
+            <span>⚠️ Please enter a valid score (2 or higher)</span>
+          </div>
+        </div>`;
         return;
       }
 
-      // Try checkout first (lowest dart count)
-      const checkout = findCheckout(target);
-      if (checkout) {
-        output.innerHTML = `✅ <span class="highlight">Checkout possible!</span><br>
-        Suggested darts: <b>${checkout.join(" , ")}</b><br>
-        <span style='color:#aaa'>Checkout in ${checkout.length} dart${checkout.length>1?"s":""}!</span>`;
-        return;
+      let resultHTML = '';
+      
+      if (activeTab === 'checkout') {
+        const checkout = findCheckout(target);
+        
+        if (checkout) {
+          const dartCount = Math.max(...checkout.map(d => d.count));
+          resultHTML = `<div class="result-item checkout">
+            <div class="dart-combo">
+              ${checkout.map(d => `<span class="dart">${d.dart.label}</span>`).join('')}
+            </div>
+            <div class="score-info">
+              <span>✅ Checkout in ${dartCount} dart${dartCount > 1 ? 's' : ''}!</span>
+              <span>Total: ${target}</span>
+            </div>
+          </div>`;
+        } else {
+          resultHTML = `<div class="result-item">
+            <div class="dart-combo">
+              <span class="dart">Boogey Number</span>
+            </div>
+            <div class="score-info">
+              <span>❌ No checkout available for ${target}</span>
+            </div>
+          </div>`;
+        }
       }
-
-      // Try setup next
-      const setup = findSetup(target);
-      if (setup) {
-        output.innerHTML = `🎯 <span class="highlight">No checkout this turn.</span><br>
-        Setup suggestion: <b>${setup.combo.join(" , ")}</b><br>
-        Leave <span class="highlight">${setup.leave}</span> for next turn.`;
-        return;
+      
+      if (activeTab === 'setup' || (!resultHTML && activeTab === 'checkout')) {
+        const setups = findOptimalSetups(target);
+        
+        if (setups.length > 0) {
+          resultHTML = setups.map(setup => `
+            <div class="result-item setup">
+              <div class="dart-combo">
+                ${setup.darts.map(dart => `<span class="dart">${dart.label}</span>`).join('')}
+              </div>
+              <div class="score-info">
+                <span>Score: ${setup.score}</span>
+                <span>Leave: ${setup.leave} ${checkoutScores.has(setup.leave) ? '✅' : ''}</span>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          // Fall back to max score if no setups found
+          const maxScore = findMaxScore(target);
+          resultHTML = `
+            <div class="result-item max-score">
+              <div class="dart-combo">
+                ${maxScore.darts.map(dart => `<span class="dart">${dart.label}</span>`).join('')}
+              </div>
+              <div class="score-info">
+                <span>Score: ${maxScore.score}</span>
+                <span>Leave: ${maxScore.leave}</span>
+              </div>
+            </div>
+          `;
+        }
       }
-
-      // Otherwise go max score
-      const high = highestScore(target);
-      output.innerHTML = `💥 <span class="highlight">No setup available.</span><br>
-      Go for max score: <b>${high.combo.join(" , ")}</b><br>
-      Total scored: <span class="highlight">${high.score}</span>`;
+      
+      if (activeTab === 'max') {
+        const maxScore = findMaxScore(target);
+        resultHTML = `
+          <div class="result-item max-score">
+            <div class="dart-combo">
+              ${maxScore.darts.map(dart => `<span class="dart">${dart.label}</span>`).join('')}
+            </div>
+            <div class="score-info">
+              <span>Score: ${maxScore.score}</span>
+              <span>Leave: ${maxScore.leave}</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      output.innerHTML = resultHTML;
     }
+
+    // Add keyboard support
+    document.getElementById('target').addEventListener('keyup', function(event) {
+      if (event.key === 'Enter') {
+        calculate();
+      }
+    });
+
+    // Calculate on load with default value
+    window.onload = calculate;
   </script>
 </body>
 </html>
