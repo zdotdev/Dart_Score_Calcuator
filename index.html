@@ -380,44 +380,45 @@
     }
 
     function findCheckout(target) {
+      const checkouts = [];
+      // 1-dart checkout
       for (const dart of allThrows) {
         if (dart.value === target && (dart.label.startsWith('D') || dart.label === 'DBULL')) {
-          return [{dart: dart, count: 1}];
+          checkouts.push([{dart: dart, count: 1}]);
+          if (checkouts.length === 3) return checkouts;
         }
       }
-      
+      // 2-dart checkout
       for (const first of allThrows) {
         const remaining = target - first.value;
         if (remaining <= 0) continue;
-        
         for (const second of allThrows) {
           if (second.value === remaining && (second.label.startsWith('D') || second.label === 'DBULL')) {
-            return [{dart: first, count: 2}, {dart: second, count: 2}];
+            checkouts.push([{dart: first, count: 2}, {dart: second, count: 2}]);
+            if (checkouts.length === 3) return checkouts;
           }
         }
       }
-
+      // 3-dart checkout
       for (const first of allThrows) {
         for (const second of allThrows) {
           const subtotal = first.value + second.value;
           if (subtotal >= target) continue;
-          
           const remaining = target - subtotal;
           if (remaining <= 0) continue;
-          
           for (const third of allThrows) {
             if (third.value === remaining && (third.label.startsWith('D') || third.label === 'DBULL')) {
-              return [
+              checkouts.push([
                 {dart: first, count: 3},
                 {dart: second, count: 3},
                 {dart: third, count: 3}
-              ];
+              ]);
+              if (checkouts.length === 3) return checkouts;
             }
           }
         }
       }
-      
-      return null;
+      return checkouts.length > 0 ? checkouts : null;
     }
 
     function findOptimalSetups(target) {
@@ -427,9 +428,9 @@
       
       const seenLeaves = new Set();
       const bestSetups = new Map();
-      for (const first of allThrows) {
-        for (const second of allThrows) {
-          for (const third of allThrows) {
+      for (const first of allThrows.slice().sort((a, b) => b.value - a.value)) {
+        for (const second of allThrows.slice().sort((a, b) => b.value - a.value)) {
+          for (const third of allThrows.slice().sort((a, b) => b.value - a.value)) {
             const total = first.value + second.value + third.value;
             if (total >= target || total % 2 !== 0 || !(third.label.startsWith('D') || third.label === 'DBULL')) continue;
             const leave = target - total;
@@ -516,19 +517,20 @@
       let resultHTML = '';
       
       if (activeTab === 'checkout') {
-        const checkout = findCheckout(target);
-        
-        if (checkout) {
-          const dartCount = Math.max(...checkout.map(d => d.count));
-          resultHTML = `<div class="result-item checkout">
-            <div class="dart-combo">
-              ${checkout.map(d => `<span class="dart">${d.dart.label}</span>`).join('')}
-            </div>
-            <div class="score-info">
-              <span><i class="fas fa-check-circle" style="color: var(--tertiary);"></i> Checkout in ${dartCount} dart${dartCount > 1 ? 's' : ''}!</span>
-              <span class="score-value">Total: ${target}</span>
-            </div>
-          </div>`;
+        const checkouts = findCheckout(target);
+        if (checkouts && checkouts.length > 0) {
+          resultHTML = checkouts.map(combo => {
+            const dartCount = Math.max(...combo.map(d => d.count));
+            return `<div class="result-item checkout">
+              <div class="dart-combo">
+                ${combo.map(d => `<span class="dart">${d.dart.label}</span>`).join('')}
+              </div>
+              <div class="score-info">
+                <span><i class="fas fa-check-circle" style="color: var(--tertiary);"></i> Checkout in ${dartCount} dart${dartCount > 1 ? 's' : ''}!</span>
+                <span class="score-value">Total: ${target}</span>
+              </div>
+            </div>`;
+          }).join('');
         } else {
           resultHTML = `<div class="result-item">
             <div class="dart-combo">
