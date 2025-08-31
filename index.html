@@ -381,10 +381,20 @@
 
     function findCheckout(target) {
       const checkouts = [];
+      let dbullAdded = false;
+      let doubleFound = false;
       // 1-dart checkout
       for (const dart of allThrows) {
         if (dart.value === target && (dart.label.startsWith('D') || dart.label === 'DBULL')) {
-          checkouts.push([{dart: dart, count: 1}]);
+          if (dart.label === 'DBULL') {
+            if (!dbullAdded) {
+              checkouts.push([{dart: dart, count: 1}]);
+              dbullAdded = true;
+            }
+          } else {
+            checkouts.push([{dart: dart, count: 1}]);
+            doubleFound = true;
+          }
           if (checkouts.length === 3) return checkouts;
         }
       }
@@ -394,7 +404,15 @@
         if (remaining <= 0) continue;
         for (const second of allThrows) {
           if (second.value === remaining && (second.label.startsWith('D') || second.label === 'DBULL')) {
-            checkouts.push([{dart: first, count: 2}, {dart: second, count: 2}]);
+            if (second.label === 'DBULL') {
+              if (!dbullAdded) {
+                checkouts.push([{dart: first, count: 2}, {dart: second, count: 2}]);
+                dbullAdded = true;
+              }
+            } else {
+              checkouts.push([{dart: first, count: 2}, {dart: second, count: 2}]);
+              doubleFound = true;
+            }
             if (checkouts.length === 3) return checkouts;
           }
         }
@@ -408,15 +426,46 @@
           if (remaining <= 0) continue;
           for (const third of allThrows) {
             if (third.value === remaining && (third.label.startsWith('D') || third.label === 'DBULL')) {
-              checkouts.push([
-                {dart: first, count: 3},
-                {dart: second, count: 3},
-                {dart: third, count: 3}
-              ]);
+              if (third.label === 'DBULL') {
+                if (!dbullAdded) {
+                  checkouts.push([
+                    {dart: first, count: 3},
+                    {dart: second, count: 3},
+                    {dart: third, count: 3}
+                  ]);
+                  dbullAdded = true;
+                }
+              } else {
+                checkouts.push([
+                  {dart: first, count: 3},
+                  {dart: second, count: 3},
+                  {dart: third, count: 3}
+                ]);
+                doubleFound = true;
+              }
               if (checkouts.length === 3) return checkouts;
             }
           }
         }
+      }
+      // If only DBULL is possible, allow it to be the only suggestion
+      if (!doubleFound && dbullAdded && checkouts.length > 0) {
+        return checkouts;
+      }
+      // Otherwise, filter out extra DBULL suggestions (keep only one)
+      if (dbullAdded && doubleFound) {
+        let dbullKept = false;
+        return checkouts.filter(combo => {
+          const last = combo[combo.length-1].dart.label;
+          if (last === 'DBULL') {
+            if (!dbullKept) {
+              dbullKept = true;
+              return true;
+            }
+            return false;
+          }
+          return true;
+        });
       }
       return checkouts.length > 0 ? checkouts : null;
     }
