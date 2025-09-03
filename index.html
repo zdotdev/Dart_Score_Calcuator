@@ -531,7 +531,7 @@
         for (const second of allThrows) {
           for (const third of allThrows) {
             const total = first.value + second.value + third.value;
-            if (total <= target && total % 2 === 0 && (third.label.startsWith('D') || third.label === 'DBULL')) {
+            if (total <= target) {
               if (total > maxScore) {
                 maxScore = total;
                 bestCombo = [first, second, third];
